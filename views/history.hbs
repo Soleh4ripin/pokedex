@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Pokémon Collection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        html {
+            overflow-y: scroll;
+        }
+
+        #page-content {
+            display: none;
+        }
+
+        body {
+            background-color: #e8ebf5;
+        }
+
+        .navbar-custom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+
+        }
+
+        .navbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            height: 60px;
+        }
+
+        .nav-btn-group {
+            display: flex;
+            gap: 0.5rem;
+
+        }
+
+
+        .card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: none;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border-radius: 30px;
+            background-color: white;
+            margin-left: 20px;
+            margin-right: 20px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+
+        }
+
+        .card:hover .pokemon-number-hover {
+            color: gold;
+            transform: scale(1.1);
+        }
+
+        .pokemon-card {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            height: 100%;
+            min-height: 120px;
+            padding: 8px 12px;
+            transition: transform 0.2s;
+        }
+
+        .pokemon-card:hover {
+            transform: scale(1.02);
+        }
+
+        .pokemon-img-wrapper {
+            width: 120px;
+            min-width: 120px;
+            position: relative;
+        }
+
+        .pokemon-info {
+            flex-grow: 1;
+            padding-left: 12px;
+        }
+
+        .pokemon-number-hover {
+            display: inline-block;
+            transition: transform 0.2s ease-in-out, color 0.2s ease-in-out;
+            transform-origin: center;
+        }
+
+        .card:active {
+            transform: translateY(1px);
+
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .card {
+            overflow: visible !important;
+            /* allow elements to overflow */
+            border-radius: 1rem;
+
+            background-color: white;
+            margin-bottom: 35px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: none;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border-radius: 30px;
+        }
+
+        .pokemon-img {
+            max-height: 100px;
+            z-index: 1;
+            position: relative;
+        }
+
+        .pokemon-image {
+            position: absolute;
+            top: -90px;
+            right: 0px;
+            width: 160px;
+            height: auto;
+            z-index: 2;
+            pointer-events: none;
+
+        }
+
+        .poke-ball-outside {
+            position: absolute;
+            top: -90px;
+            right: -40px;
+            width: 70px;
+            height: 70px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .pokeball-icon {
+            height: 40px;
+            width: 40px;
+        }
+
+
+        .pokeball-button {
+
+            display: inline-block;
+            padding: 10px;
+            background-color: white;
+            border-radius: 15%;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+        }
+
+        .pokeball-button:hover {
+            border-radius: 15%;
+            background-color: #ffe066;
+        }
+
+        .caught-pokemon-count {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            /* jarak antara gambar dan teks */
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            padding: 5px 10px;
+            border-radius: 8px;
+            width: fit-content;
+        }
+
+        .caught-pokemon-count img.pokeball-icon {
+            width: 50px;
+            height: 50px;
+            user-select: none;
+        }
+
+        .caught-pokemon-count a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .nav-btn-group a {
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn-group a:active {
+            transform: scale(0.96);
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        #loading-spinner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1050;
+            display: flex;
+            flex-direction: row;
+            /* Ubah dari column ke row */
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            gap: 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Spinner -->
+    <div id="loading-spinner" style="display: flex; align-items: center;">
+        <img src="https://pokedex-power.vercel.app/assets/pokeloading.png" alt="Loading..."
+            style="width: 20px; height: 20px; margin-right: 8px; animation: spin 1s linear infinite;" />
+        <span style="font-weight: bold; color: #212529;">Loading...</span>
+    </div>
+
+    <!-- Konten Utama -->
+    <div class="container mt-4">
+        <div class="mb-4 d-flex justify-content-between align-items-start">
+            <!-- KIRI: Logo Pokémon -->
+            <div>
+                <a href="/pokemon/views" class="d-flex align-items-center text-decoration-none">
+                    <img src="https://pokedex-power.vercel.app/assets/pokemon-logo.png" alt="Pokémon Logo"
+                        style="max-height: 80px;" />
+                </a>
+            </div>
+
+            <!-- KANAN: Pokéball counter + Keep & History -->
+            <div class="d-flex flex-column align-items-end">
+                <!-- Poké Ball Counter -->
+                <div class="caught-pokemon-count">
+                    <a href="/pokemon/my-pokemons" title="My Collection" class="pokeball-button">
+                        {{!-- <span id="pokemon-count">{{saveCaught}}</span> --}}
+                        <img src="https://pokedex-power.vercel.app/assets/pokecatch.png" alt="Poké Ball"
+                            class="pokeball-icon" />
+                    </a>
+                </div>
+
+                <!-- Keep & History buttons -->
+                <div class="d-flex gap-2 mb-5">
+                    <a href="/pokemon/my-pokemons"
+                        class="btn btn-sm rounded-pill px-3 {{#if (eq currentPath '/pokemon/my-pokemons')}}btn-warning{{else}}btn-outline-warning{{/if}}"
+                        style="width: 100px;">
+                        Keep
+                    </a>
+                    <a href="/pokemon/release-history"
+                        class="btn btn-sm rounded-pill px-3 {{#if (eq currentPath '/pokemon/release-history')}}btn-light{{else}}btn-outline-light{{/if}}"
+                        style="width: 100px;">
+                        History
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="container mt-4">
+            <div class="row row-cols-1 row-cols-md-4 g-4">
+                {{#each history}}
+                <div class="col-md-4 mb-4">
+                    <div class="card pokemon-card position-relative">
+                        <a href="/pokemon/detail/{{this.pokemonName}}"
+                            class="d-flex text-decoration-none text-dark align-items-center w-100">
+                            <div class="pokemon-info">
+                                <h6 class="pokemon-number-hover mb-1">
+                                    {{formatNumber @index ../currentPage ../limit}}
+                                </h6>
+                                <h5 class="card-title text-capitalize mb-1">
+                                    {{this.pokemonName}}
+                                </h5>
+                                <small class="text-muted">
+                                    <em>{{nickname}}</em>
+                                </small>
+                            </div>
+                            <div class="pokemon-img-wrapper">
+                                {{!-- <img src="{{this.imageUrl}}" class="pokemon-image rounded-end"
+                                    class="pokemon-image" alt="{{this.name}}" /> --}}
+                                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{this.pokeId}}.png"
+                                    class="pokemon-image" alt="{{this.name}}" />
+                                <img src="https://pokedex-power.vercel.app/assets/poke-shadow.png" alt="Poké Ball"
+                                    class="poke-ball-outside" />
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+
+            {{#unless history.length}}
+            <div class="text-center my-5">
+                <img src="https://pokedex-power.vercel.app/assets/poke-shadow.png" alt="Poké Ball" class=" mb-3 " />
+                <p><strong>you don't have a history pokemon yet</strong></p>
+                <a href="/pokemon/views" class="btn btn-light rounded-pill shadow-sm">
+                    Go!! Catch a Pokemon
+                    <img src="https://pokedex-power.vercel.app/assets/pokecatch.png" alt="Poké Ball"
+                        class="pokeball-icon ms-2" width="20" height="20" />
+                </a>
+            </div>
+            {{/unless}}
+        </div>
+    </div>
+
+    <script>
+        function releasePokemon(nickname) {
+            fetch(`/pokemon/release/${nickname}`, {
+                method: 'DELETE'
+            })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message);
+                    location.reload(); // atau update tampilan
+                })
+                .catch(err => alert('Gagal melepaskan Pokémon'));
+        }
+        window.addEventListener("load", function () {
+            const spinner = document.getElementById("loading-spinner");
+            const content = document.getElementById("page-content");
+
+            // Sembunyikan spinner
+            if (spinner) {
+                spinner.style.display = "none";
+            }
+
+            // Tampilkan konten (jika kamu punya #page-content)
+            if (content) {
+                content.style.display = "block";
+            }
+        });
+    </script>
+</body>
+
+</html>

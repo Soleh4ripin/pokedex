@@ -1,0 +1,28 @@
+{
+  "name": "pokedex",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "nest start",
+    "start:dev": "nest start --watch"
+  },
+  "dependencies": {
+    "@nestjs/axios": "^4.0.0",
+    "@nestjs/common": "^11.1.2",
+    "@nestjs/core": "^11.1.2",
+    "@nestjs/mongoose": "^11.0.3",
+    "@nestjs/platform-express": "^11.1.2",
+    "express-handlebars": "^8.0.1",
+    "hbs": "^4.2.0",
+    "method-override": "^3.0.0",
+    "mongoose": "^8.15.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.7",
+    "@types/express-handlebars": "^5.3.1",
+    "@types/hbs": "^4.0.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}

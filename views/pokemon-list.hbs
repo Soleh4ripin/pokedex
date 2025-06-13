@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pokémon Api</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        #page-content {
+            display: none;
+        }
+
+        .owned-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 20px;
+            height: 20px;
+            z-index: 10;
+            background-image: url('https://pokedex-power.vercel.app/assets/pokeactive.png');
+            background-size: cover;
+            animation: pulseOwned 1.2s infinite;
+        }
+
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        body {
+            background-color: #e8ebf5;
+        }
+
+        .navbar-custom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+
+        }
+
+        .navbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            height: 60px;
+        }
+
+        .nav-btn-group {
+            display: flex;
+            gap: 0.5rem;
+
+        }
+
+
+        .card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: none;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+
+        }
+
+        .card:hover .pokemon-number-hover {
+            color: gold;
+            transform: scale(1.1);
+        }
+
+        .pokemon-card {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            height: 100%;
+            min-height: 120px;
+            padding: 8px 12px;
+            transition: transform 0.2s;
+        }
+
+        .pokemon-card:hover {
+            transform: scale(1.02);
+        }
+
+        .pokemon-img-wrapper {
+            width: 120px;
+            min-width: 120px;
+            position: relative;
+        }
+
+        .pokemon-info {
+            flex-grow: 1;
+            padding-left: 12px;
+        }
+
+        .pokemon-number-hover {
+            display: inline-block;
+            transition: transform 0.2s ease-in-out, color 0.2s ease-in-out;
+            transform-origin: center;
+        }
+
+        .card:active {
+            transform: translateY(1px);
+
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .card {
+            overflow: visible !important;
+            /* allow elements to overflow */
+            border-radius: 1rem;
+            padding: 1rem;
+            margin: 1rem;
+
+        }
+
+        .pokemon-image-wrapper {
+            position: relative;
+            padding-right: 2rem;
+            /* space for pokeball */
+        }
+
+        .pokemon-img {
+            max-height: 100px;
+            z-index: 1;
+            position: relative;
+        }
+
+        .pokemon-image {
+            position: absolute;
+            top: -100px;
+            right: -30px;
+            width: 160px;
+            height: auto;
+            z-index: 2;
+            pointer-events: none;
+
+        }
+
+        .poke-ball-outside {
+            position: absolute;
+            top: -90px;
+            right: -40px;
+            width: 90px;
+            height: auto;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .pokeball-icon {
+            height: 40px;
+            width: 40px;
+        }
+
+
+        .pokeball-button {
+            cursor: pointer;
+            display: inline-block;
+            padding: 10px;
+            background-color: white;
+            border-radius: 15%;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+        }
+
+        .pokeball-button:hover {
+            border-radius: 15%;
+            background-color: #ffe066;
+        }
+
+        .caught-pokemon-count {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            /* jarak antara gambar dan teks */
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            padding: 5px 10px;
+            border-radius: 8px;
+            width: fit-content;
+        }
+
+        .caught-pokemon-count img.pokeball-icon {
+            width: 50px;
+            height: 50px;
+            user-select: none;
+        }
+
+        .caught-pokemon-count a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .nav-btn-group a {
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn-group a:active {
+            transform: scale(0.96);
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        #loading-spinner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1050;
+            display: flex;
+            flex-direction: row;
+            /* Ubah dari column ke row */
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            gap: 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Spinner yang muncul saat halaman loading -->
+    <div id="loading-spinner" style="display: flex; align-items: center;">
+        <img src="https://pokedex-power.vercel.app/assets/pokeloading.png" alt="Loading..."
+            style="width: 20px; height: 20px; margin-right: 8px; animation: spin 1s linear infinite;" />
+        <span style="font-weight: bold; color: #212529;">Loading...</span>
+    </div>
+    <!-- Konten utama -->
+    <div id="page-content">
+        <div class="container mt-4">
+            <div class="mb-4 d-flex justify-content-between align-items-start">
+                <!-- KIRI: Logo Pokémon -->
+                <div>
+                    <a href="/pokemon/views" class="mb-5 d-flex align-items-center text-decoration-none">
+                        <img src="https://pokedex-power.vercel.app/assets/pokemon-logo.png" alt="Pokémon Logo"
+                            style="max-height: 80px;" />
+                    </a>
+                </div>
+
+                <!-- KANAN: Pokéball counter + Keep & History -->
+                <div class="d-flex flex-column align-items-end">
+                    <!-- Poké Ball Counter -->
+                    <div class="caught-pokemon-count">
+                        <a href="/pokemon/my-pokemons" title="My Collection" class="pokeball-button">
+                            {{!-- <span id="pokemon-count">{{saveCaught}}</span> --}}
+                            <img src="https://pokedex-power.vercel.app/assets/pokecatch.png" alt="Poké Ball"
+                                class="pokeball-icon" />
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="row" id="pokemon-container">
+                {{#each pokemons}}
+                <div class="col-md-4 mb-4">
+                    <a href="/pokemon/detail/{{this.name}}" class="text-decoration-none text-dark d-block h-100">
+                        <div class="card h-120 d-flex flex-row align-items-center position-relative overflow-visible">
+
+                            {{#if this.isOwned}}
+                            <img src="https://pokedex-power.vercel.app/assets/pokeactive.png" alt="Owned"
+                                class="owned-badge" />
+                            {{/if}}
+
+                            <div class="card-body">
+                                <h6 class="pokemon-number-hover mb-1">
+                                    {{formatNumber @index ../currentPage ../limit}}
+                                </h6>
+                                <h5 class="card-title text-capitalize mb-0">{{this.name}}</h5>
+                            </div>
+
+                            <div class="position-relative pokemon-image-wrapper">
+                                <img src="https://pokedex-power.vercel.app/assets/poke-shadow.png" alt="Poké Ball"
+                                    class="poke-ball-outside" />
+                                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{this.pokeId}}.png"
+                                    class="pokemon-image" alt="{{this.name}}" />
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {{/each}}
+            </div>
+            <nav>
+                <ul class="pagination justify-content-center mt-4">
+
+                    {{!-- Tampilkan hanya jika di halaman > 1 --}}
+                    {{#if (gt currentPage 1)}}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{decrement currentPage}}&limit={{limit}}"
+                            aria-label="Previous">
+                            <span aria-hidden="true">&laquo; Previous</span>
+                        </a>
+                    </li>
+                    {{/if}}
+
+                    {{!-- Tampilkan hanya jika belum di halaman terakhir --}}
+                    {{#if (lt currentPage totalPages)}}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{increment currentPage}}&limit={{limit}}" aria-label="Next">
+                            <span aria-hidden="true">Next &raquo;</span>
+                        </a>
+                    </li>
+                    {{/if}}
+
+                </ul>
+            </nav>
+
+        </div>
+    </div>
+    <script>
+        // Spinner hilang setelah halaman selesai load
+        window.addEventListener("load", function () {
+            document.getElementById("loading-spinner").style.display = "none";
+            document.getElementById("page-content").style.display = "block";
+        });
+
+        // Tampilkan spinner saat klik link detail
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll('a[href^="/pokemon/detail/"]').forEach(link => {
+                link.addEventListener('click', function () {
+                    document.getElementById('loading-spinner').style.display = 'block';
+                });
+            });
+
+            // Spinner saat klik pagination
+            document.querySelectorAll(".pagination a").forEach(link => {
+                link.addEventListener("click", function () {
+                    document.getElementById("loading-spinner").style.display = "block";
+                });
+            });
+        });
+
+        let offset = document.querySelectorAll('#pokemon-container > .col-md-4').length;
+        const limit = 21;
+
+
+        document.getElementById('load-more')?.addEventListener('click', function () {
+            const currentPage = parseInt(new URLSearchParams(window.location.search).get('page')) || 1;
+            const limit = parseInt(new URLSearchParams(window.location.search).get('limit')) || 10;
+            const nextPage = currentPage + 1;
+
+            fetch(`?page=${nextPage}&limit=${limit}`)
+                .then(res => res.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newItems = doc.querySelector('#pokemon-list').innerHTML;
+                    document.querySelector('#pokemon-list').innerHTML += newItems;
+
+                    // Update URL
+                    window.history.replaceState({}, '', `?page=${nextPage}&limit=${limit}`);
+                });
+        });
+
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

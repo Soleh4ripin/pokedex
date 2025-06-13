@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Detail Pokémon - {{pokemon.name}}</title>
+
+  <!-- Bootstrap & FontAwesome -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    /* Spinner animation */
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes bounce {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-10px);
+      }
+
+    }
+
+    @keyframes jump {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-30px);
+      }
+    }
+
+    html {
+      overflow-y: scroll;
+    }
+
+    body {
+      background-color: #e8ebf5;
+    }
+
+    body.overflow-hidden {
+      overflow: hidden;
+    }
+
+    .pokeball-spin {
+      animation: spin 1s linear infinite;
+    }
+
+    .pokeball-jump {
+      width: 60px;
+      height: 60px;
+      animation: jump 0.6s infinite;
+    }
+
+    /* Catch loading overlay */
+    #catch-loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 9999;
+
+    }
+
+    /* Spinner box */
+    #loading-spinner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1050;
+      display: flex;
+      flex-direction: row;
+      /* Ubah dari column ke row */
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      gap: 10px;
+    }
+
+
+    #page-content {
+      display: none;
+    }
+
+    .pokeball-icon {
+      width: 24px;
+      height: 24px;
+      animation: bounce 1s infinite;
+    }
+
+    .pokeball {
+      width: 50px;
+      height: 50px;
+    }
+
+    .pokemon-image-wrapper {
+      position: relative;
+      padding-right: 2rem;
+      /* space for pokeball */
+    }
+
+    .pokemon-img {
+      max-height: 100px;
+      z-index: 1;
+      position: relative;
+    }
+
+    .pokemon-image {
+      position: relative;
+      top: -40px;
+      right: -30px;
+      width: 240px;
+      height: auto;
+      z-index: 2;
+      pointer-events: none;
+
+
+    }
+
+    .poke-ball-outside {
+      position: absolute;
+      top: -70px;
+      right: 100px;
+      width: 90px;
+      height: auto;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .caught-pokemon-count {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      /* jarak antara gambar dan teks */
+      font-weight: 600;
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      padding: 5px 10px;
+      border-radius: 8px;
+      width: fit-content;
+    }
+
+    .caught-pokemon-count img.pokeball-icon {
+      width: 40px;
+      height: 40px;
+      user-select: none;
+    }
+
+    .caught-pokemon-count a {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .pokeball-button {
+      display: inline-block;
+      padding: 10px;
+      background-color: white;
+      border-radius: 15%;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s;
+    }
+
+    .pokeball-button:hover {
+      border-radius: 15%;
+      background-color: #ffe066;
+    }
+
+    .catch-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      background-color: #ffffff;
+      color: rgb(23, 19, 19);
+      font-weight: bold;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s ease;
+    }
+
+    #catch-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 20px;
+      background-color: #ffffff;
+      color: rgb(23, 19, 19);
+      font-weight: bold;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      border: none;
+      padding: 8px 16px;
+    }
+
+    .catch-button:hover {
+      background-color: gold;
+    }
+
+    #catch-button:hover {
+      background-color: gold;
+    }
+
+    .pokemon-type {
+      display: inline-block;
+      padding: 5px 10px;
+      margin: 0 5px 10px 0;
+      border-radius: 12px;
+      color: white;
+      font-weight: 500;
+      text-transform: capitalize;
+    }
+
+    .type-grass {
+      background-color: #78C850;
+    }
+
+    .type-poison {
+      background-color: #A040A0;
+    }
+
+    .type-fire {
+      background-color: #F08030;
+    }
+
+    .type-water {
+      background-color: #6890F0;
+    }
+
+    .pokemon-detail-label {
+      min-width: 120px;
+      display: inline-block;
+      font-weight: 600;
+    }
+
+    .data-number {
+      color: #2a75bb;
+      font-weight: 700;
+    }
+
+    .data-string {
+      color: #444;
+      font-style: italic;
+    }
+
+    /* Hilangkan garis bawah nav */
+    .nav-tabs {
+      border-bottom: none !important;
+    }
+
+    /* Hilangkan border nav-link */
+    .nav-tabs .nav-link {
+      border: none !important;
+      background: transparent;
+      color: #333;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    /* Aktif tab tampilan tetap mencolok */
+    .nav-tabs .nav-link.active {
+      background-color: #fcd400;
+      color: #000;
+      border-radius: 15px;
+      font-weight: 600;
+      box-shadow: none;
+    }
+
+    /* Container dasar */
+    .tab-content {
+      background-color: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.05);
+      padding: 2rem;
+      margin-top: 2rem;
+      border: none;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.06);
+      width: 60%;
+      /* Sesuaikan ukuran, misalnya 60%, 70%, atau fix px */
+      max-width: 700px;
+      /* Batas maksimum agar tidak terlalu lebar di layar besar */
+      margin: auto;
+      /* Pusatkan di tengah */
+
+    }
+
+    /* Card body tanpa border */
+    .card {
+      border: none;
+      background-color: transparent;
+    }
+
+    .card-body {
+      padding: 1rem 0;
+    }
+
+    /* List item */
+    .list-group-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: none !important;
+      padding: 0.75rem 0;
+      font-size: 1rem;
+      background-color: transparent;
+    }
+
+    /* Label teks kiri */
+    .pokemon-detail-label {
+      font-weight: 600;
+      color: #333;
+    }
+
+    /* Teks angka atau nilai */
+    .data-number {
+      font-weight: 500;
+      color: #555;
+    }
+
+    /* Badge untuk types dan abilities */
+    .badge {
+      font-size: 0.95rem;
+      padding: 0.4em 0.8em;
+      border-radius: 10px;
+      border: none !important;
+    }
+
+    /* Type colors override */
+    .badge.bg-success {
+      background-color: #a8df8e !important;
+      color: #1b4027;
+    }
+
+    .badge.bg-danger {
+      background-color: #c86a6a !important;
+      color: #fff;
+    }
+
+    /* Abilities badge */
+    .badge.bg-primary {
+      background-color: #ffe66d !important;
+      color: #333;
+      display: inline-flex;
+      align-items: center;
+      border: none !important;
+    }
+
+    /* Tab nav active */
+    .nav-tabs .nav-link.active {
+      background-color: #fcd400;
+      color: #000;
+      border-radius: 15px;
+      font-weight: 600;
+      border: none;
+
+    }
+
+    .nav-tabs {
+      border-bottom: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      /* bayangan ke bawah dari nav */
+      border-radius: 12px;
+      background-color: #fff;
+      padding: 0.5rem 1rem;
+    }
+
+
+    .moves-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      /* 3 kolom per baris */
+      gap: 10px;
+      max-height: 150px;
+      /* perkecil tinggi konten moves */
+      overflow-y: auto;
+      /* scroll ke bawah jika moves banyak */
+      padding-right: 5px;
+    }
+
+    /* Style badge moves */
+    .moves-grid .badge {
+      background-color: #dcdcdc;
+      color: #000;
+      border-radius: 12px;
+      text-align: center;
+      padding: 8px;
+      font-size: 0.85rem;
+      border: none;
+      white-space: nowrap;
+    }
+
+    /* Progress bar */
+    .progress {
+      background-color: #e9ecef;
+      border-radius: 12px;
+      border: none;
+    }
+
+    .progress-bar {
+      font-weight: 500;
+      font-size: 0.9rem;
+      border-radius: 12px;
+      border: none;
+    }
+
+    .img-fluid {
+      position: relative;
+
+      width: 0px;
+      height: auto;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .pokemon-img {
+      max-height: 500px;
+      max-width: 100%;
+      width: 100%;
+      height: auto;
+
+    }
+
+    .owned-badge-detail {
+      position: absolute;
+      top: -80px;
+      left: 70px;
+      width: 28px;
+      height: 28px;
+      z-index: 5;
+      animation: pulseOwned 1.2s infinite;
+      filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.4));
+    }
+
+    .owned-badge {
+      position: absolute;
+      top: -80px;
+      left: 70px;
+      width: 28px;
+      height: 28px;
+      z-index: 5;
+      animation: pulseOwned 1.2s infinite;
+      filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.4));
+    }
+
+    .owned-text {
+      position: absolute;
+      top: -35px;
+      left: 60px;
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 2px;
+      background-color: #333;
+      color: #fff;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Spinner -->
+  <div id="loading-spinner" style="display: flex; align-items: center;">
+    <img src="https://pokedex-power.vercel.app/assets/pokeloading.png" alt="Loading..."
+      style="width: 20px; height: 20px; margin-right: 8px; animation: spin 1s linear infinite;" />
+    <span style="font-weight: bold; color: #212529;">Loading...</span>
+  </div>
+  <div class="container mt-4">
+    <div class="mb-4 d-flex justify-content-between align-items-center">
+      <div>
+        <a href="/pokemon/views" class="d-flex align-items-center text-decoration-none">
+          <img src="https://pokedex-power.vercel.app/assets/pokemon-logo.png" alt="Pokémon Logo"
+            style="max-height: 80px;" />
+        </a>
+      </div>
+      <div class="caught-pokemon-count">
+        <a href="/pokemon/my-pokemons" title="My Collection" class="pokeball-button">
+          <span id="pokemon-count">{{saveCaught}}</span>
+          <img src="https://pokedex-power.vercel.app/assets/pokecatch.png" alt="Poké Ball" class="pokeball" />
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-content">
+    <div class="container">
+      <div class="row">
+        <!-- KIRI -->
+        <div class="col-md-4 text-center mb-5">
+          <p class="text-muted">#{{padNumber pokemon.pokeId 4}}</p>
+
+          <!-- NAMA + ICON OWNED -->
+          <h2 class="text-capitalize mb-5 d-flex justify-content-center align-items-center gap-2">
+            {{pokemon.name}}
+            {{#if pokemon.isOwned}}
+            <img src="https://pokedex-power.vercel.app/assets/pokeactive.png" alt="Owned"
+              style="width: 24px; height: 24px;" />
+            {{/if}}
+          </h2>
+
+          <!-- GAMBAR POKEMON -->
+          <div class="position-relative pokemon-image-wrapper">
+            {{#if isOwned}}
+            <img src="https://pokedex-power.vercel.app/assets/pokeactive.png" alt="Owned" class="owned-badge-detail" />
+            <div class="owned-text">Owned</div>
+            {{else}}
+            <img src="https://pokedex-power.vercel.app/assets/pokeloading.png" alt="Not Owned" class="owned-badge" />
+            {{/if}}
+
+            <img src="https://pokedex-power.vercel.app/assets/poke-shadow.png" alt="Poké Ball"
+              class="poke-ball-outside" />
+            <img
+              src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{pokemon.pokeId}}.png"
+              class="pokemon-image" alt="{{pokemon.name}}" />
+          </div>
+
+
+          <!-- AREA TANGKAP -->
+          <div class="mt-3 mb-3" id="catch-area">
+            <form class="d-flex justify-content-center" id="catch-form" action="/pokemon/catch/{{pokemon.name}}"
+              method="POST">
+              <button type="submit" class="btn btn-light d-flex align-items-center gap-2" id="catch-button">
+                <img src="https://pokedex-power.vercel.app/assets/pokecatch.png" alt="Poké Ball"
+                  class="pokeball-icon" />
+                Catch {{pokemon.name}}
+              </button>
+            </form>
+
+            <div id="catch-loading" class="mt-2 text-center d-none">
+              <img src="https://pokedex-power.vercel.app/assets/pokecatch.png" alt="Loading..." class="pokeball-spin"
+                style="width: 40px; height: 40px;" />
+              <div>
+                <button id="retry-button" class="btn btn-warning mt-2 d-none" onclick="tryCatchPokemon()"></button>
+                Throwing Pokeball...
+              </div>
+            </div>
+
+            <div id="catch-error" class="alert alert-danger mt-2 d-none"></div>
+
+            <div id="nickname-form" class="mt-3 d-none">
+              <form method="POST" action="/pokemon/catch/{{pokemon.name}}/save">
+                <div class="mb-3">
+                  <label for="nickname" class="form-label">
+                    Wow You Catch {{pokemon.name}}...<br />
+                    Give a Wild {{pokemon.name}} Nickname
+                  </label>
+                  <input type="text" id="nickname" name="nickname" class="form-control" required />
+                </div>
+                <button type="submit" class="btn btn-success">Simpan</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- TYPES -->
+          <div>
+            {{#each pokemon.types}}
+            <span class="pokemon-type type-{{this}}">{{this}}</span>
+            {{/each}}
+          </div>
+        </div>
+
+
+        <!-- KANAN -->
+        <div class="col-md-8">
+          <div class="tab-content mt-3" id="pokemonTabsContent">
+            <!-- Tabs -->
+            <div class="d-flex justify-content-center">
+              <ul class="nav nav-tabs" id="pokemonTabs" role="tablist">
+                <li class="nav-item">
+                  <button class="nav-link active" id="about-tab" data-bs-toggle="tab" data-bs-target="#about"
+                    type="button" role="tab" aria-controls="about" aria-selected="true">About</button>
+                </li>
+                <li class="nav-item">
+                  <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button"
+                    role="tab" aria-controls="stats" aria-selected="false">Stats</button>
+                </li>
+                <li class="nav-item">
+                  <button class="nav-link" id="moves-tab" data-bs-toggle="tab" data-bs-target="#moves" type="button"
+                    role="tab" aria-controls="moves" aria-selected="false">Moves</button>
+                </li>
+              </ul>
+            </div>
+            <!-- ABOUT -->
+            <div class="tab-pane fade show active" id="about" role="tabpanel" aria-labelledby="about-tab">
+              <div class="card mb-3">
+                <div class="card-body">
+                  <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                      <span class="pokemon-detail-label">Types:</span>
+                      {{#each pokemon.about.types}}
+                      <span class="badge bg-success text-capitalize me-1">{{this}}</span>
+                      {{/each}}
+                    </li>
+                    <li class="list-group-item">
+                      <span class="pokemon-detail-label">Height:</span>
+                      <span class="data-number">{{pokemon.about.height}} m</span>
+                    </li>
+                    <li class="list-group-item">
+                      <span class="pokemon-detail-label">Weight:</span>
+                      <span class="data-number">{{pokemon.about.weight}} kg</span>
+                    </li>
+                    <li class="list-group-item">
+                      <span class="pokemon-detail-label">Abilities:</span>
+                      {{#each pokemon.about.abilities}}
+                      <span class="badge bg-primary text-capitalize me-1">{{this}}</span>
+                      {{/each}}
+                    </li>
+                    <li class="list-group-item">
+                      <span class="pokemon-detail-label">Base Experience:</span>
+                      <span class="data-number">{{pokemon.about.experience}}</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- STATS -->
+            <div class="tab-pane fade" id="stats" role="tabpanel" aria-labelledby="stats-tab">
+              <div class="card mb-3">
+                <div class="card-body">
+                  {{#each (objectEntries pokemon.stats)}}
+                  <div class="mb-3">
+                    <span class="pokemon-detail-label text-capitalize">{{@key}}:</span>
+                    <div class="progress" style="height: 20px;">
+                      <div class="progress-bar bg-info" role="progressbar" style="width: {{this}}%;"
+                        aria-valuenow="{{this}}" aria-valuemin="0" aria-valuemax="200">{{this}}</div>
+                    </div>
+                  </div>
+                  {{/each}}
+                </div>
+              </div>
+            </div>
+
+            <!-- MOVES -->
+            <div class="tab-pane fade" id="moves" role="tabpanel" aria-labelledby="moves-tab">
+              <div class="card mb-3">
+                <div class="card-body">
+                  <div class="moves-grid">
+                    {{#each pokemon.moves}}
+                    <span
+                      class="badge bg-secondary text-capitalize border border-dark rounded px-3 py-2">{{this}}</span>
+                    {{/each}}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{!-- <div id="escape-message" class="escape-box d-none">
+    <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" class="escape-ball"
+      alt="Poké Ball">
+    <span><strong>{{pokemon.name}}</strong> berhasil melarikan diri!</span>
+  </div> --}}
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Spinner halaman saat loading dan unload
+    window.addEventListener("load", function () {
+      document.getElementById("loading-spinner").style.display = "none";
+      document.getElementById("page-content").style.display = "block";
+    });
+
+    window.addEventListener("beforeunload", () => {
+      document.getElementById("loading-spinner").style.display = "block";
+    });
+    // Elemen penting
+    const catchForm = document.getElementById("catch-form");
+    const catchButton = document.getElementById("catch-button");
+    const retryButton = document.getElementById("retry-button");
+    const catchLoading = document.getElementById("catch-loading");
+    const nicknameForm = document.getElementById("nickname-form");
+    const cancelNicknameBtn = document.getElementById("cancel-nickname");
+    const catchError = document.getElementById("catch-error");
+
+    // Saat form submit (tombol catch ditekan)
+    catchForm.addEventListener("submit", function (e) {
+      e.preventDefault(); // Cegah reload form
+      tryCatchPokemon();  // Jalankan fungsi tangkap Pokémon
+    });
+
+    // Fungsi untuk menangkap Pokémon
+    async function tryCatchPokemon() {
+      catchButton.style.display = "none";
+      retryButton.classList.add("d-none");
+      catchLoading.classList.remove("d-none");
+      catchError.classList.add("d-none");
+      catchError.textContent = "";
+
+      // Simulasi animasi loading 2 detik
+      await new Promise(res => setTimeout(res, 2000));
+
+      try {
+        const catchUrl = catchForm.getAttribute("action").replace("/save", "");
+        const response = await fetch(catchUrl, { method: "POST" });
+        const result = await response.json();
+
+        catchLoading.classList.add("d-none");
+
+        if (result.success) {
+          nicknameForm.classList.remove("d-none");
+        } else {
+          catchError.textContent = result.message || "Pokémon gagal ditangkap.";
+          catchError.classList.remove("d-none");
+          retryButton.classList.remove("d-none");
+          catchButton.style.display = "flex";
+        }
+      } catch (err) {
+        catchLoading.classList.add("d-none");
+        catchError.textContent = "Terjadi kesalahan server.";
+        catchError.classList.remove("d-none");
+        retryButton.classList.remove("d-none");
+        catchButton.style.display = "flex";
+      }
+    }
+
+    // Batal input nickname
+    cancelNicknameBtn.addEventListener("click", () => {
+      nicknameForm.classList.add("d-none");
+      catchButton.style.display = "flex";
+      nicknameForm.nickname.value = "";
+    });
+
+    // Submit form nickname
+    nicknameForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const nickname = nicknameForm.nickname.value.trim();
+      if (!nickname) {
+        catchError.textContent = "Nickname tidak boleh kosong!";
+        catchError.classList.remove("d-none");
+        return;
+      }
+
+      catchError.classList.add("d-none");
+
+      try {
+        const name = catchForm.getAttribute("data-name"); // Tambahkan atribut ini ke form
+        const response = await fetch(`/pokemon/${name}/save`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nickname })
+        });
+
+        const result = await response.json();
+
+        if (result.message.includes("berhasil")) {
+          alert(`Pokémon ${nickname} berhasil disimpan!`);
+          nicknameForm.classList.add("d-none");
+          catchButton.style.display = "flex";
+          nicknameForm.nickname.value = "";
+        } else {
+          catchError.textContent = result.message;
+          catchError.classList.remove("d-none");
+        }
+      } catch (err) {
+        catchError.textContent = "Gagal menyimpan Pokémon.";
+        catchError.classList.remove("d-none");
+      }
+    });
+
+
+  </script>
+
+
+
+</body>
+
+</html>
